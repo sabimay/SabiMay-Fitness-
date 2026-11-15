@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7e9ef">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Sabi Fitness Tracker</title>
+<style>
+:root{--bg:#fff9fb;--card:#fff;--ink:#352b31;--muted:#8b7d85;--pink:#d985a6;--pink2:#f7e5ed;--line:#f0dce5;--green:#4f8a70}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{padding:24px 18px 18px;background:linear-gradient(135deg,#f8e8ef,#fff5f8)}h1{font-size:27px;margin:0 0 5px;letter-spacing:-.7px}.sub{color:var(--muted);font-size:13px}
+main{max-width:680px;margin:auto;padding:16px 14px 38px}.tabs{display:flex;gap:8px;margin:4px 0 16px}.tab{flex:1;border:1px solid var(--line);background:white;border-radius:14px;padding:12px;font-weight:700;color:var(--muted)}.tab.active{background:var(--pink);border-color:var(--pink);color:white}
+.panel,.exercise,.stat{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:15px;margin-bottom:12px;box-shadow:0 3px 14px #6c35440a}
+h2{font-size:18px;margin:0 0 10px}h3{font-size:16px;margin:0 0 5px}.muted{color:var(--muted);font-size:13px;line-height:1.4}.exercise-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.tag{background:var(--pink2);color:#9d5272;border-radius:20px;padding:5px 9px;font-size:11px;font-weight:700;white-space:nowrap}
+.sets{margin-top:12px;display:grid;gap:7px}.set{display:grid;grid-template-columns:42px 1fr 1fr 38px;gap:7px;align-items:center;font-size:12px;color:var(--muted)}input[type=number]{width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 7px;font-size:15px;background:#fffafd;color:var(--ink)}input[type=checkbox]{width:21px;height:21px;accent-color:var(--pink);justify-self:center}
+label.small{font-size:10px;color:var(--muted);display:block;margin:0 0 4px 3px}.btn{border:0;border-radius:12px;background:var(--pink);color:white;font-weight:700;padding:12px 15px;font-size:14px}.btn.secondary{background:var(--pink2);color:#96506e}.btn.ghost{background:white;border:1px solid var(--line);color:var(--muted)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions .btn{flex:1}
+.hidden{display:none}.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat strong{font-size:23px;display:block}.stat span{font-size:12px;color:var(--muted)}
+.history-item{border-top:1px solid var(--line);padding:10px 0}.history-item:first-child{border:0}.notice{background:#fff2f6;border-radius:12px;padding:12px;color:#81556a;font-size:12px;line-height:1.5;margin:12px 0}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
+</style>
+</head>
+<body>
+<header><h1>♡ Sabi Fitness</h1><div class="sub">Dein Trainingsbegleiter · 2× Ganzkörper pro Woche</div></header>
+<main>
+<div class="tabs"><button class="tab active" data-day="A">Training A</button><button class="tab" data-day="B">Training B</button><button class="tab" data-day="stats">Fortschritt</button></div>
+<section id="workout">
+<div class="panel"><div class="exercise-top"><div><h2 id="dayTitle">Training A · Po, Beine & Rücken</h2><div class="muted">Wähle dein Gewicht pro Satz und hake den Satz ab.</div></div><span class="tag">ca. 60 Min.</span></div>
+<div class="notice">Starte mit einem Gewicht, bei dem noch etwa 2–3 saubere Wiederholungen möglich wären. Bei Schmerzen bitte abbrechen.</div>
+<div id="exerciseList"></div>
+<div class="actions"><button class="btn" id="finish">Training speichern ✓</button><button class="btn secondary" id="reset">Eingaben leeren</button></div>
+</div></section>
+<section id="statsView" class="hidden">
+<div class="stats">
+<div class="stat"><strong id="count">0</strong><span>abgeschlossene Trainings</span></div>
+<div class="stat"><strong id="volume">0 kg</strong><span>letztes Trainingsvolumen*</span></div>
+</div>
+<div class="panel" style="margin-top:12px"><h2>Deine letzten Trainings</h2><div class="muted">Gespeicherte Einheiten und Gewichte</div><div id="history" style="margin-top:10px"></div></div>
+<div class="panel"><h2>Datensicherung</h2><div class="muted">Deine Einträge bleiben auf diesem Gerät in diesem Browser gespeichert. Exportiere gelegentlich ein Backup.</div><div class="actions"><button class="btn secondary" id="export">Backup exportieren</button><button class="btn ghost" id="importBtn">Backup importieren</button><input id="importFile" type="file" accept="application/json" class="hidden"></div></div>
+<div class="notice">*Trainingsvolumen = Gewicht × Wiederholungen der abgehakten Sätze. Bei Körpergewichtsübungen ohne Zusatzgewicht wird nichts addiert.</div>
+</section>
+<footer>Du musst nicht perfekt sein. Du musst nur dranbleiben. ♡</footer>
+</main>
+<script>
+const plans={
+A:{title:"Training A · Po, Beine & Rücken",items:[
+["Hip Thrust","3 × 10–12","90 Sek."],["Beinpresse","3 × 10–12","90 Sek."],["Latzug","3 × 10–12","60–75 Sek."],["Brustpresse","2 × 10–12","60–75 Sek."],["Abduktorenmaschine","2 × 15–20","45–60 Sek."],["Seitheben","2 × 12–15","45–60 Sek."],["Dead Bug","2 × 10 je Seite","45 Sek."]
+]},
+B:{title:"Training B · Po, Oberkörper & Arme",items:[
+["Kabel-Kickbacks","3 × 12–15 je Bein","45–60 Sek."],["Bulgarian Split Squats","2 × 8–10 je Bein","60–90 Sek."],["Rudern (brustgestützt bevorzugt)","3 × 10–12","60–75 Sek."],["Beinbeuger","2 × 12–15","60 Sek."],["Trizepsdrücken am Kabel","2 × 12–15","45–60 Sek."],["Bizepscurls","2 × 12–15","45–60 Sek."],["Pallof Press","2 × 10–12 je Seite","45 Sek."]
+]}};
+let day="A", data=JSON.parse(localStorage.getItem("sabiFitness")||'{"history":[]}'), entries={};
+function save(){localStorage.setItem("sabiFitness",JSON.stringify(data))}
+function key(d,i,s){return d+"-"+i+"-"+s}
+function render(){
+document.getElementById("dayTitle").textContent=plans[day].title;
+const root=document.getElementById("exerciseList");root.innerHTML="";
+plans[day].items.forEach((ex,i)=>{
+let n=parseInt(ex[1]),sets=n||2;let card=document.createElement("div");card.className="exercise";
+let last=latestWeight(ex[0]);card.innerHTML=`<div class="exercise-top"><div><h3>${i+1}. ${ex[0]}</h3><div class="muted">${ex[1]} Wiederholungen · Pause ${ex[2]}</div></div><span class="tag">Vorher: ${last===null?"–":last+" kg"}</span></div><div class="sets"><div class="set"><span>Satz</span><span>Gewicht (kg)</span><span>Wdh.</span><span>✓</span></div></div>`;
+let setsDiv=card.querySelector(".sets");
+for(let s=0;s<sets;s++){let k=key(day,i,s),v=entries[k]||{};let row=document.createElement("div");row.className="set";row.innerHTML=`<span>${s+1}</span><input type="number" min="0" step="0.5" placeholder="kg" value="${v.w??""}" aria-label="Gewicht Satz ${s+1}"><input type="number" min="1" step="1" placeholder="Wdh." value="${v.r??""}" aria-label="Wiederholungen Satz ${s+1}"><input type="checkbox" ${v.done?"checked":""} aria-label="Satz erledigt">`;
+let ins=row.querySelectorAll("input");ins[0].oninput=e=>{entries[k]={...entries[k],w:e.target.value};};ins[1].oninput=e=>{entries[k]={...entries[k],r:e.target.value};};ins[2].onchange=e=>{entries[k]={...entries[k],done:e.target.checked};};setsDiv.append(row)}
+root.append(card)
+})
+}
+function latestWeight(name){for(let h of data.history){let x=h.exercises.find(e=>e.name===name&&e.sets.some(s=>s.w));if(x){let vals=x.sets.filter(s=>s.w).map(s=>+s.w);return vals.length?Math.max(...vals):null}}return null}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));let stats=b.dataset.day==="stats";document.getElementById("workout").classList.toggle("hidden",stats);document.getElementById("statsView").classList.toggle("hidden",!stats);if(!stats){day=b.dataset.day;entries={};render()}else renderStats()});
+document.getElementById("reset").onclick=()=>{if(confirm("Eingaben für diese Einheit wirklich leeren?")){entries={};render()}};
+document.getElementById("finish").onclick=()=>{
+let exercises=plans[day].items.map((ex,i)=>({name:ex[0],sets:Array.from({length:parseInt(ex[1])||2},(_,s)=>{let v=entries[key(day,i,s)]||{};return {w:v.w||"",r:v.r||"",done:!!v.done}})}));
+if(!exercises.some(e=>e.sets.some(s=>s.done))){alert("Hake mindestens einen Satz ab, bevor du speicherst.");return}
+let volume=exercises.reduce((sum,e)=>sum+e.sets.filter(s=>s.done&&s.w&&s.r).reduce((a,s)=>a+(+s.w)*(+s.r),0),0);
+data.history.unshift({day,date:new Date().toISOString(),exercises,volume});save();entries={};render();alert("Training gespeichert. Stark gemacht! ♡")
+};
+function renderStats(){document.getElementById("count").textContent=data.history.length;document.getElementById("volume").textContent=data.history.length?Math.round(data.history[0].volume).toLocaleString("de-DE")+" kg":"0 kg";let el=document.getElementById("history");el.innerHTML=data.history.length?"":"<p class='muted'>Noch keine Trainings gespeichert. Dein erstes Training wartet! ♡</p>";data.history.slice(0,20).forEach(h=>{let d=new Date(h.date);let div=document.createElement("div");div.className="history-item";let detail=h.exercises.map(e=>{let vals=e.sets.filter(s=>s.done).map(s=>(s.w?s.w+" kg":"ohne Gewicht")+" × "+(s.r||"–"));return vals.length?e.name+": "+vals.join(", "):null}).filter(Boolean).join("<br>");div.innerHTML=`<strong>${h.day==="A"?"Training A":"Training B"}</strong> · ${d.toLocaleDateString("de-DE")}<div class="muted">${detail||"Keine Satzdetails"}</div><div class="muted">Volumen: ${Math.round(h.volume).toLocaleString("de-DE")} kg</div>`;el.append(div)})}
+document.getElementById("export").onclick=()=>{let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="sabi-fitness-backup.json";a.click();URL.revokeObjectURL(a.href)};
+document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+document.getElementById("importFile").onchange=async e=>{try{let f=e.target.files[0];if(!f)return;let x=JSON.parse(await f.text());if(!Array.isArray(x.history))throw 0;data=x;save();renderStats();alert("Backup importiert!")}catch{alert("Die Datei konnte nicht gelesen werden.")}};
+render();
+if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {})); }
+</script>
+</body></html>

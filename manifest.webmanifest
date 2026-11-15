@@ -1,0 +1,19 @@
+{
+  "name": "Sabi Fitness",
+  "short_name": "Sabi Fitness",
+  "description": "Dein persönlicher Trainings-Tracker",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff9fb",
+  "theme_color": "#f7e9ef",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
